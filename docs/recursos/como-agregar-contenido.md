@@ -9,11 +9,8 @@ archivo en minúsculas, con guiones (`kebab-case`), sin espacios ni tildes:
 
 ```text
 docs/
-  resumenes/unidad-2.md
-  teoria/normalizacion.md
-  practica/guia-3.md
+  clases/clase-05.md      (una página por clase: ## Resumen + ## Material)
   ejercicios/practica.md   (agregar una sección "## Ejercicio N" nueva)
-  materiales/clases.md
   recursos/links.md
 ```
 
@@ -39,14 +36,14 @@ Cada página es un archivo `.md` normal. Elementos disponibles:
 ```
 
 - **Imágenes**: guardarlas junto al contenido relacionado (por ejemplo
-  `docs/teoria/img/`) y referenciarlas con `![descripción](img/archivo.png)`
+  `docs/clases/img/`) y referenciarlas con `![descripción](img/archivo.png)`
 
-Ver [Resúmenes → Unidad 1](../resumenes/unidad-1.md) como referencia con
-todos estos elementos usados a la vez.
+Ver [Clase 1](../clases/clase-01.md) como referencia de la estructura
+`## Resumen` + `## Material` que usa cada página de clase.
 
 - **Archivos adjuntos (PDF, slides)**: guardarlos en la carpeta
   `archivos/` de la sección correspondiente (por ejemplo
-  `docs/materiales/archivos/`), con nombre en `kebab-case`. Todo link a un
+  `docs/clases/archivos/`), con nombre en `kebab-case`. Todo link a un
   material cargado (PDF u otro archivo) **debe abrir en una pestaña nueva**,
   agregando `{: target="_blank" }` después del link:
 
@@ -60,10 +57,10 @@ MkDocs no descubre páginas automáticamente: hay que agregar la ruta en el
 bloque `nav` de `mkdocs.yml`, dentro de la sección correspondiente.
 
 ```yaml
-- Resúmenes:
-    - resumenes/index.md
-    - "Unidad 1": resumenes/unidad-1.md
-    - "Unidad 2": resumenes/unidad-2.md   # nueva línea
+- Clases:
+    - clases/index.md
+    - "Clase 4": clases/clase-04.md
+    - "Clase 5": clases/clase-05.md   # nueva línea
 ```
 
 ## 4. Previsualizar localmente

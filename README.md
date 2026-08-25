@@ -2,8 +2,8 @@
 
 Apunte y wiki personal de la materia **Ingeniería de Datos II** de la
 Universidad Argentina de la Empresa (UADE). El sitio se construye de forma
-progresiva a lo largo de la cursada: resúmenes de teoría, apuntes de clase,
-material de los docentes, ejercicios resueltos y recursos externos.
+progresiva a lo largo de la cursada: una página por clase (resumen y
+material), ejercicios resueltos y recursos externos.
 
 Publicado con [MkDocs](https://www.mkdocs.org/) y el tema
 [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/), desplegado
@@ -15,12 +15,9 @@ automáticamente en GitHub Pages.
 .
 ├── docs/                       # Todo el contenido del sitio (Markdown)
 │   ├── index.md                 # Página de inicio
-│   ├── info-materia/            # Cronograma (incluye unidades), bibliografía
-│   ├── resumenes/                # Resúmenes de teoría por unidad
-│   ├── teoria/                   # Desarrollo de conceptos individuales
-│   ├── practica/                 # Guías de trabajos prácticos
+│   ├── info-materia/            # Docente, horario, cronograma, bibliografía
+│   ├── clases/                   # Una página por clase (resumen + material) y sus archivos
 │   ├── ejercicios/               # Ejercicios resueltos y explicados
-│   ├── materiales/               # Material provisto por los docentes (clases, presentaciones, archivos)
 │   ├── recursos/                 # Documentación externa, herramientas, links
 │   ├── stylesheets/extra.css     # Ajustes de estilo sobre el tema Material
 │   └── javascripts/mathjax.js    # Configuración de fórmulas matemáticas
@@ -51,10 +48,6 @@ mkdocs serve
 ```
 
 El sitio queda disponible en `http://127.0.0.1:8000`.
-
-
-https://federico-castillo.github.io/UADE-Ingenieria-de-Datos-II/
-```
 
 ## Licencia
 
