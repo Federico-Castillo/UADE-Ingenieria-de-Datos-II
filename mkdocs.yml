@@ -1,5 +1,5 @@
 site_name: Ingeniería de Datos II
-site_description: Apuntes, resúmenes, ejercicios y recursos de Ingeniería de Datos II (UADE)
+site_description: Apuntes de clase, ejercicios y recursos de Ingeniería de Datos II (UADE)
 site_author: Federico Castillo
 site_url: https://federico-castillo.github.io/UADE-Ingenieria-de-Datos-II/
 
@@ -76,23 +76,16 @@ nav:
       - info-materia/index.md
       - Cronograma: info-materia/cronograma.md
       - Bibliografía oficial: info-materia/bibliografia.md
-  - Resúmenes:
-      - resumenes/index.md
-      - "Unidad 1 (ejemplo)": resumenes/unidad-1.md
-  - Teoría:
-      - teoria/index.md
-      - "Concepto de ejemplo": teoria/concepto-ejemplo.md
-  - Práctica:
-      - practica/index.md
-      - "Guía 1 (ejemplo)": practica/guia-1.md
+  - Clases:
+      - clases/index.md
+      - "Clase 1": clases/clase-01.md
+      - "Clase 2": clases/clase-02.md
+      - "Clase 3": clases/clase-03.md
+      - "Clase 4": clases/clase-04.md
   - Ejercicios:
       - ejercicios/index.md
       - Ejercicios de teoría: ejercicios/teoria.md
       - Ejercicios de práctica: ejercicios/practica.md
-  - Materiales:
-      - materiales/index.md
-      - Clases: materiales/clases.md
-      - Presentaciones: materiales/presentaciones.md
   - Recursos:
       - recursos/index.md
       - Documentación: recursos/documentacion.md
