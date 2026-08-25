@@ -5,12 +5,7 @@ Argentina de la Empresa). Este sitio se construye de forma progresiva durante
 la cursada: cada clase, guía o ejercicio resuelto se agrega como una página
 Markdown nueva.
 
-!!! info "Estado del sitio"
-    Esta es la base inicial del proyecto. Las secciones existen y navegan
-    correctamente, pero el contenido específico de la materia (unidades,
-    ejercicios, etc.) todavía no fue cargado. Ver
-    [Información de la materia](info-materia/index.md) y las páginas de
-    ejemplo de cada sección.
+
 
 ## Cómo está organizada esta wiki
 
