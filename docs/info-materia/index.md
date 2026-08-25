@@ -7,7 +7,5 @@ Datos generales y oficiales de la cursada de Ingeniería de Datos II.
     de cada página a medida que se confirme la información (usualmente
     disponible en el campus virtual o en la primera clase).
 
-- [Programa](programa.md) — contenidos y unidades de la materia
-- [Docentes y horarios](docentes-horarios.md) — profesores, comisión y horario de cursada
-- [Cronograma](cronograma.md) — fechas de clases, entregas y exámenes
+- [Cronograma](cronograma.md) — fechas de clases, entregas, exámenes, unidades y objetivos
 - [Bibliografía oficial](bibliografia.md) — bibliografía obligatoria y recomendada de la cátedra

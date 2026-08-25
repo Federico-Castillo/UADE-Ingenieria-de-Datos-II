@@ -9,34 +9,18 @@ Publicado con [MkDocs](https://www.mkdocs.org/) y el tema
 [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/), desplegado
 automáticamente en GitHub Pages.
 
-## Por qué MkDocs + Material
-
-Se eligió esta stack en vez de un generador más pesado (Docusaurus, Astro,
-VitePress) porque el caso de uso es un apunte/wiki personal, no un producto:
-
-- Contenido 100% en Markdown, sin necesidad de escribir componentes ni JS.
-- Navegación declarada en un único archivo (`mkdocs.yml`), fácil de extender
-  a medida que se agregan páginas.
-- Soporte nativo de código con resaltado de sintaxis, tablas, listas,
-  fórmulas matemáticas (MathJax), imágenes, notas/advertencias
-  (admonitions) y buscador integrado — todo lo que pide un apunte técnico.
-- Diseño responsive y legible por defecto, pensado para textos largos.
-- Un único comando (`mkdocs build`) genera un sitio estático; el deploy a
-  GitHub Pages queda automatizado con GitHub Actions.
-- Cero dependencias de Node/JS: solo Python + una librería.
-
 ## Estructura del proyecto
 
 ```text
 .
 ├── docs/                       # Todo el contenido del sitio (Markdown)
 │   ├── index.md                 # Página de inicio
-│   ├── info-materia/            # Programa, docentes, horarios, cronograma, bibliografía
+│   ├── info-materia/            # Cronograma (incluye unidades), bibliografía
 │   ├── resumenes/                # Resúmenes de teoría por unidad
 │   ├── teoria/                   # Desarrollo de conceptos individuales
 │   ├── practica/                 # Guías de trabajos prácticos
 │   ├── ejercicios/               # Ejercicios resueltos y explicados
-│   ├── materiales/               # Material provisto por los docentes
+│   ├── materiales/               # Material provisto por los docentes (clases, presentaciones, archivos)
 │   ├── recursos/                 # Documentación externa, herramientas, links
 │   ├── stylesheets/extra.css     # Ajustes de estilo sobre el tema Material
 │   └── javascripts/mathjax.js    # Configuración de fórmulas matemáticas
