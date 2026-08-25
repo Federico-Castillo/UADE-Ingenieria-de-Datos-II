@@ -8,7 +8,3 @@ Distribución y Replicación, cómo afecta a la consistencia. Modelos de consist
     Completar con el resumen de la clase.
 
 _Pendiente._
-
-## Material
-
-[Clase 2 — Distribución](archivos/clase-02-distribucion.pdf){: target="_blank" }
