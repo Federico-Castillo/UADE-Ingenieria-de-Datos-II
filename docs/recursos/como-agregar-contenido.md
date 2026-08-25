@@ -44,6 +44,16 @@ Cada página es un archivo `.md` normal. Elementos disponibles:
 Ver [Resúmenes → Unidad 1](../resumenes/unidad-1.md) como referencia con
 todos estos elementos usados a la vez.
 
+- **Archivos adjuntos (PDF, slides)**: guardarlos en la carpeta
+  `archivos/` de la sección correspondiente (por ejemplo
+  `docs/materiales/archivos/`), con nombre en `kebab-case`. Todo link a un
+  material cargado (PDF u otro archivo) **debe abrir en una pestaña nueva**,
+  agregando `{: target="_blank" }` después del link:
+
+  ```markdown
+  [Nombre del material](archivos/archivo.pdf){: target="_blank" }
+  ```
+
 ## 3. Registrar la página en la navegación
 
 MkDocs no descubre páginas automáticamente: hay que agregar la ruta en el
