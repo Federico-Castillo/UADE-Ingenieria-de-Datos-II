@@ -1,0 +1,28 @@
+/* Ajustes mínimos sobre el tema Material para mejorar la lectura de
+   textos largos (apuntes, resúmenes) en desktop y mobile. */
+
+.md-grid {
+  max-width: 1240px;
+}
+
+/* Ancho de línea cómodo para lectura de contenido extenso */
+.md-content__inner {
+  max-width: 46rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.md-content__inner p,
+.md-content__inner li {
+  line-height: 1.65;
+}
+
+/* Tipografía monoespaciada un poco más compacta en bloques de código */
+.md-typeset pre > code {
+  font-size: 0.82rem;
+}
+
+/* Tablas más cómodas para comparar datos */
+.md-typeset table:not([class]) {
+  font-size: 0.75rem;
+}
