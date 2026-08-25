@@ -52,41 +52,7 @@ mkdocs serve
 
 El sitio queda disponible en `http://127.0.0.1:8000`.
 
-## Cómo agregar contenido nuevo
 
-Guía completa en
-[`docs/recursos/como-agregar-contenido.md`](docs/recursos/como-agregar-contenido.md)
-(también visible en el sitio publicado, sección **Recursos**). Resumen:
-
-1. Crear el archivo `.md` dentro de la carpeta de la sección correspondiente
-   (`docs/resumenes/`, `docs/teoria/`, `docs/practica/`, etc.), con nombre en
-   minúsculas y guiones (`unidad-2.md`, `guia-3.md`).
-2. Escribir el contenido en Markdown (soporta código, tablas, fórmulas con
-   `\( ... \)` / `\[ ... \]`, y notas con `!!! note "Título"`).
-3. Agregar la página al bloque `nav` de `mkdocs.yml`, dentro de la sección
-   correspondiente (MkDocs no descubre páginas automáticamente).
-4. Verificar con `mkdocs serve` y hacer commit + push a `main`.
-
-## Build
-
-```bash
-mkdocs build --strict
-```
-
-Genera el sitio estático en `site/` (carpeta ignorada por git, no se
-versiona).
-
-## Deploy a GitHub Pages
-
-El deploy está automatizado con GitHub Actions
-(`.github/workflows/deploy.yml`): cada push a `main` ejecuta `mkdocs build`
-y publica el resultado en GitHub Pages. No requiere ningún paso manual.
-
-**Configuración única, la primera vez:** en el repositorio de GitHub, ir a
-`Settings → Pages → Build and deployment → Source` y seleccionar
-**GitHub Actions**. Una vez publicado, el sitio queda disponible en:
-
-```text
 https://federico-castillo.github.io/UADE-Ingenieria-de-Datos-II/
 ```
 
