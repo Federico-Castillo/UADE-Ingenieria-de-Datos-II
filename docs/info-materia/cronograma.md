@@ -1,8 +1,13 @@
 # Cronograma
 
+## Documento oficial
+
+[Cronograma — Martes TM (PDF)](archivos/cronograma-martes-tm.pdf)
+
 !!! warning "Placeholder"
-    Completar con las fechas reales a medida que se confirmen: clases,
-    entregas de TPs, parciales y recuperatorios.
+    Completar la tabla a medida que se confirmen fechas puntuales de
+    entregas de TPs, parciales y recuperatorios (el PDF de arriba es el
+    cronograma general de clases).
 
 | Semana | Fecha | Tema / Evento |
 |---|---|---|
