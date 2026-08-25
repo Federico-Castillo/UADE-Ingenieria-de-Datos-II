@@ -2,8 +2,8 @@
 
 Apunte y wiki personal de la materia **Ingeniería de Datos II** de la
 Universidad Argentina de la Empresa (UADE). El sitio se construye de forma
-progresiva a lo largo de la cursada: una página por clase (resumen y
-material), ejercicios resueltos y recursos externos.
+progresiva a lo largo de la cursada: una página por clase (resumen), sus
+materiales y ejercicios resueltos.
 
 Publicado con [MkDocs](https://www.mkdocs.org/) y el tema
 [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/), desplegado
@@ -16,13 +16,14 @@ automáticamente en GitHub Pages.
 ├── docs/                       # Todo el contenido del sitio (Markdown)
 │   ├── index.md                 # Página de inicio
 │   ├── info-materia/            # Docente, horario, cronograma, bibliografía
-│   ├── clases/                   # Una página por clase (resumen + material) y sus archivos
+│   ├── clases/                   # Una página por clase (resumen)
+│   ├── materiales/               # Presentaciones, laboratorios y sus archivos
 │   ├── ejercicios/               # Ejercicios resueltos y explicados
-│   ├── recursos/                 # Documentación externa, herramientas, links
 │   ├── stylesheets/extra.css     # Ajustes de estilo sobre el tema Material
 │   └── javascripts/mathjax.js    # Configuración de fórmulas matemáticas
 ├── mkdocs.yml                   # Configuración del sitio y navegación
 ├── requirements.txt             # Dependencias Python (mkdocs-material)
+├── CONTRIBUTING.md              # Guía para agregar contenido nuevo al sitio
 └── .github/workflows/deploy.yml # Build y deploy automático a GitHub Pages
 ```
 

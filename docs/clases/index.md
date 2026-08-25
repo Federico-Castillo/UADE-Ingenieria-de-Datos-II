@@ -1,7 +1,8 @@
 # Clases
 
-Una página por clase, con el resumen de lo visto y el link al material
-correspondiente (presentaciones, laboratorios, etc.). Ver el
+Una página por clase, con el resumen de lo visto. El material de cada
+clase (presentaciones, laboratorios, etc.) está en
+[Materiales](../materiales/index.md). Ver el
 [cronograma completo](../info-materia/cronograma.md) para las fechas y
 temas de todas las clases.
 
@@ -13,7 +14,6 @@ temas de todas las clases.
 | [4](clase-04.md) | 25/8 | Bases de datos Tabulares. Características, carga y recuperación de información, escalabilidad. |
 
 !!! info "Convención"
-    Cada clase es un archivo `clases/clase-NN.md` con dos secciones:
-    `## Resumen` (lo visto en la clase) y `## Material` (link al PDF u
-    otro archivo en `clases/archivos/`, abierto en pestaña nueva). Ver
-    [Cómo agregar contenido](../recursos/como-agregar-contenido.md).
+    Cada clase es un archivo `clases/clase-NN.md` con una sección
+    `## Resumen` (lo visto en la clase). El material correspondiente se
+    agrega en [Materiales](../materiales/index.md), no en esta página.

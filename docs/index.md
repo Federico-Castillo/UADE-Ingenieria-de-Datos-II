@@ -10,7 +10,7 @@ Markdown nueva.
 | Sección | Contenido |
 |---|---|
 | [Información de la materia](info-materia/index.md) | Docente, horario, cronograma y bibliografía oficial |
-| [Clases](clases/index.md) | Una página por clase, con su resumen y el link al material |
+| [Clases](clases/index.md) | Una página por clase, con su resumen |
+| [Materiales](materiales/index.md) | Presentaciones, laboratorios y demás material de cada clase |
 | [Ejercicios](ejercicios/index.md) | Ejercicios (teóricos y prácticos) con sus resoluciones explicadas |
-| [Recursos](recursos/index.md) | Documentación externa, herramientas y links útiles |
 
