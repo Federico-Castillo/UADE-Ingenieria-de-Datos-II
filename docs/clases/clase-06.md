@@ -4,9 +4,11 @@ Bases de datos de Columnas. Laboratorio 3 — Apache Cassandra: CQL, modelado
 orientado a consultas, colecciones, tipos definidos por el usuario (UDT),
 tuplas y vectores.
 
+**Material:** [Laboratorio 3 — Cassandra](../materiales/archivos/clase-06-laboratorio_Cassandra.pdf){: target="_blank" }
+
 ## Resumen
 
-Laboratorio práctico sobre [Apache Cassandra](https://cassandra.apache.org/doc/latest/),
+Laboratorio práctico sobre [Apache Cassandra](https://cassandra.apache.org/doc/latest/){: target="_blank" },
 una base de datos NoSQL distribuida orientada a columnas. A diferencia de las
 bases relacionales, Cassandra se organiza en:
 
@@ -90,23 +92,6 @@ bases relacionales, Cassandra se organiza en:
     );
     ```
 
-    **Preguntas planteadas en el laboratorio:**
-
-    - **¿Cuándo conviene usar un UDT?** Cuando un grupo de campos relacionados
-      (por ejemplo los de una dirección) siempre se leen y escriben juntos y
-      no necesitan consultarse ni indexarse por separado: agruparlos en un
-      UDT evita crear una tabla adicional y simplifica el modelo.
-    - **¿Qué hace el modificador `frozen`?** Serializa el UDT completo como
-      un único valor binario e inmutable. Ya no se pueden actualizar campos
-      individuales del UDT (solo reemplazar el valor entero con un nuevo
-      `UPDATE`), pero a cambio Cassandra puede compararlo y "hashearlo" como
-      un todo.
-    - **¿Qué ventajas tiene su uso?** Al estar `frozen`, el UDT puede
-      anidarse dentro de colecciones (`list<frozen<direccion>>`) y usarse
-      como parte de la primary key, además de reducir el overhead de
-      almacenamiento frente a columnas individuales (se guarda como un solo
-      valor en vez de una celda con metadata propia por cada campo).
-
     **Tuplas**: colección de valores anónimos, de longitud fija y tipos
     heterogéneos (`tuple<...>`), implícitamente `frozen`.
 
@@ -147,22 +132,6 @@ bases relacionales, Cassandra se organiza en:
       AND alumno_id = c9d8e7f0-5678-11ed-a100-0242ac120002;
     ```
 
-    **¿Por qué no funciona el `UPDATE` anterior sobre un elemento de la
-    tupla?** Porque `tuple`, igual que un UDT, es un tipo implícitamente
-    `frozen`: se trata como un valor atómico e indivisible. La sintaxis
-    `columna[índice] = valor` para modificar un elemento puntual solo es
-    válida sobre colecciones no congeladas (`list`, `set`, `map`), no sobre
-    tuplas. **¿Cómo debería escribirse correctamente?** Reemplazando la
-    tupla completa:
-
-    ```sql
-    UPDATE entregas_tp
-    SET calificacion = (8.50, 'Promocionado')
-    WHERE materia_id = a3b8e8f0-1234-11ed-a100-0242ac120002
-      AND tp_id = 1
-      AND alumno_id = c9d8e7f0-5678-11ed-a100-0242ac120002;
-    ```
-
 ??? example "Vectores (`VECTOR`)"
     Un vector es una lista ordenada de números decimales de longitud fija
     (`VECTOR<FLOAT, n>`), donde cada posición representa una dimensión en un
@@ -196,49 +165,299 @@ bases relacionales, Cassandra se organiza en:
     Navigable Small World) para estimar rápidamente los vectores más cercanos
     sin comparar contra todas las filas.
 
-??? question "Modelado de consultas (ejercicios)"
+??? question "Modelado de consultas (ejercicios, resueltos)"
     **A) Liga de fútbol** — modelar equipos, jugadores, temporadas, partidos y
-    goleadores, diseñando tablas orientadas a satisfacer estas consultas:
-
-    - Partidos por torneo (orden descendente por fecha).
-    - Partidos por equipo (historial completo).
-    - Partidos por equipo y temporada.
-    - Últimos 10 partidos de una temporada.
-    - Ranking de goleadores.
-
-    Para cada consulta se debía analizar: ¿qué columna(s) es la partition
-    key?, ¿qué cambio en la consulta invalidaría la tabla?, ¿cómo impacta en
-    el tamaño de las particiones?
-
-    **B) Recomendaciones de películas con IA** — modelar y poblar:
+    goleadores, diseñando tablas orientadas a satisfacer estas consultas.
+    En Cassandra el modelado es "query-first": una tabla desnormalizada por
+    cada patrón de consulta, no por entidad.
 
     ```sql
+    -- 1) Partidos por torneo, orden descendente por fecha
+    CREATE TABLE partidos_por_torneo (
+        torneo_id uuid,
+        fecha timestamp,
+        partido_id uuid,
+        equipo_local text,
+        equipo_visitante text,
+        goles_local int,
+        goles_visitante int,
+        temporada text,
+        PRIMARY KEY (torneo_id, fecha, partido_id)
+    ) WITH CLUSTERING ORDER BY (fecha DESC, partido_id ASC);
+
+    -- 2) Partidos por equipo, historial completo
+    CREATE TABLE partidos_por_equipo (
+        equipo_id uuid,
+        fecha timestamp,
+        partido_id uuid,
+        rival text,
+        condicion text, -- 'local' o 'visitante'
+        goles_favor int,
+        goles_contra int,
+        temporada text,
+        PRIMARY KEY (equipo_id, fecha, partido_id)
+    ) WITH CLUSTERING ORDER BY (fecha DESC, partido_id ASC);
+
+    -- 3) Partidos por equipo y temporada
+    CREATE TABLE partidos_por_equipo_temporada (
+        equipo_id uuid,
+        temporada text,
+        fecha timestamp,
+        partido_id uuid,
+        rival text,
+        goles_favor int,
+        goles_contra int,
+        PRIMARY KEY ((equipo_id, temporada), fecha, partido_id)
+    ) WITH CLUSTERING ORDER BY (fecha DESC, partido_id ASC);
+
+    -- 4) Últimos 10 partidos de una temporada
+    CREATE TABLE partidos_por_temporada (
+        temporada text,
+        fecha timestamp,
+        partido_id uuid,
+        equipo_local text,
+        equipo_visitante text,
+        goles_local int,
+        goles_visitante int,
+        PRIMARY KEY (temporada, fecha, partido_id)
+    ) WITH CLUSTERING ORDER BY (fecha DESC, partido_id ASC);
+
+    SELECT * FROM partidos_por_temporada WHERE temporada = '2025' LIMIT 10;
+
+    -- 5) Ranking de goleadores por temporada
+    CREATE TABLE ranking_goleadores (
+        temporada text,
+        goles int,
+        jugador_id uuid,
+        jugador_nombre text,
+        equipo text,
+        PRIMARY KEY (temporada, goles, jugador_id)
+    ) WITH CLUSTERING ORDER BY (goles DESC, jugador_id ASC);
+
+    SELECT jugador_nombre, equipo, goles
+    FROM ranking_goleadores
+    WHERE temporada = '2025'
+    LIMIT 10;
+    ```
+
+    Notas de diseño: `ranking_goleadores` guarda `goles` como parte de la
+    clustering key (no como `counter`) para que Cassandra devuelva las filas
+    ya ordenadas; como una clustering key no se puede `UPDATE`, cada gol
+    implica borrar la fila vieja del jugador e insertar una nueva con el
+    valor actualizado (lo mantiene la aplicación, no la base).
+
+    **B) Recomendaciones de películas con IA** — modelo completo, con
+    colección, mapa, UDT e índices:
+
+    ```sql
+    CREATE TYPE director (
+        nombre text,
+        nacionalidad text
+    );
+
     CREATE TABLE movies (
-        movie_id UUID PRIMARY KEY,
-        title TEXT,
-        genre TEXT,
-        year INT,
-        embedding VECTOR<FLOAT, 8>
+        movie_id uuid PRIMARY KEY,
+        title text,
+        genre text,
+        year int,
+        actors set<text>,
+        info map<text, text>,
+        director frozen<director>,
+        embedding vector<float, 8>
     );
 
     CREATE CUSTOM INDEX IF NOT EXISTS idx_movies_embedding
     ON movies (embedding) USING 'StorageAttachedIndex'
     WITH OPTIONS = {'similarity_function': 'COSINE'};
 
-    INSERT INTO movies (movie_id, title, genre, year, embedding)
-    VALUES (uuid(), 'Inception', 'Sci-Fi', 2010,
-            [0.12, 0.45, 0.91, 0.33, 0.18, 0.50, 0.05, 0.82]);
+    -- Índices adicionales (StorageAttachedIndex) para filtrar por columnas
+    -- normales sin recurrir a ALLOW FILTERING
+    CREATE CUSTOM INDEX IF NOT EXISTS idx_movies_genre
+    ON movies (genre) USING 'StorageAttachedIndex';
 
-    SELECT movie_id, title, genre, year,
+    CREATE CUSTOM INDEX IF NOT EXISTS idx_movies_year
+    ON movies (year) USING 'StorageAttachedIndex';
+    ```
+
+    Carga de las 10 películas con embeddings ficticios:
+
+    ```sql
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'Inception', 'Sci-Fi', 2010,
+        {'Leonardo DiCaprio', 'Joseph Gordon-Levitt'},
+        {'idioma': 'inglés', 'duracion': '148 min'},
+        {nombre: 'Christopher Nolan', nacionalidad: 'Reino Unido'},
+        [0.12, 0.45, 0.91, 0.33, 0.18, 0.50, 0.05, 0.82]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'The Matrix', 'Sci-Fi', 1999,
+        {'Keanu Reeves', 'Carrie-Anne Moss'},
+        {'idioma': 'inglés', 'duracion': '136 min'},
+        {nombre: 'Lana Wachowski', nacionalidad: 'Estados Unidos'},
+        [0.14, 0.40, 0.85, 0.36, 0.20, 0.48, 0.08, 0.78]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'Interstellar', 'Sci-Fi', 2014,
+        {'Matthew McConaughey', 'Anne Hathaway'},
+        {'idioma': 'inglés', 'duracion': '169 min'},
+        {nombre: 'Christopher Nolan', nacionalidad: 'Reino Unido'},
+        [0.10, 0.47, 0.88, 0.30, 0.22, 0.52, 0.06, 0.80]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'The Godfather', 'Drama', 1972,
+        {'Marlon Brando', 'Al Pacino'},
+        {'idioma': 'inglés', 'duracion': '175 min'},
+        {nombre: 'Francis Ford Coppola', nacionalidad: 'Estados Unidos'},
+        [0.70, 0.15, 0.20, 0.60, 0.55, 0.10, 0.65, 0.25]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'Pulp Fiction', 'Crime', 1994,
+        {'John Travolta', 'Uma Thurman'},
+        {'idioma': 'inglés', 'duracion': '154 min'},
+        {nombre: 'Quentin Tarantino', nacionalidad: 'Estados Unidos'},
+        [0.65, 0.20, 0.25, 0.58, 0.50, 0.15, 0.60, 0.30]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'Whiplash', 'Drama', 2014,
+        {'Miles Teller', 'J.K. Simmons'},
+        {'idioma': 'inglés', 'duracion': '106 min'},
+        {nombre: 'Damien Chazelle', nacionalidad: 'Estados Unidos'},
+        [0.68, 0.18, 0.22, 0.62, 0.52, 0.12, 0.63, 0.28]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'Toy Story', 'Animation', 1995,
+        {'Tom Hanks', 'Tim Allen'},
+        {'idioma': 'inglés', 'duracion': '81 min'},
+        {nombre: 'John Lasseter', nacionalidad: 'Estados Unidos'},
+        [0.30, 0.85, 0.40, 0.10, 0.75, 0.35, 0.20, 0.55]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'Coco', 'Animation', 2017,
+        {'Anthony Gonzalez', 'Gael García Bernal'},
+        {'idioma': 'español', 'duracion': '105 min'},
+        {nombre: 'Lee Unkrich', nacionalidad: 'Estados Unidos'},
+        [0.32, 0.82, 0.42, 0.12, 0.72, 0.38, 0.18, 0.58]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'The Dark Knight', 'Action', 2008,
+        {'Christian Bale', 'Heath Ledger'},
+        {'idioma': 'inglés', 'duracion': '152 min'},
+        {nombre: 'Christopher Nolan', nacionalidad: 'Reino Unido'},
+        [0.55, 0.30, 0.60, 0.45, 0.28, 0.65, 0.40, 0.20]);
+
+    INSERT INTO movies (movie_id, title, genre, year, actors, info, director, embedding)
+    VALUES (uuid(), 'Parasite', 'Thriller', 2019,
+        {'Song Kang-ho', 'Lee Sun-kyun'},
+        {'idioma': 'coreano', 'duracion': '132 min'},
+        {nombre: 'Bong Joon-ho', nacionalidad: 'Corea del Sur'},
+        [0.58, 0.28, 0.58, 0.48, 0.30, 0.62, 0.42, 0.22]);
+    ```
+
+    Consultas pedidas:
+
+    ```sql
+    -- Consultar todas las películas
+    SELECT title, genre, year FROM movies;
+
+    -- Buscar por género (usa el índice SAI idx_movies_genre)
+    SELECT title, year FROM movies WHERE genre = 'Sci-Fi';
+
+    -- Buscar por año (usa el índice SAI idx_movies_year)
+    SELECT title, genre FROM movies WHERE year = 2014;
+
+    -- Recomendación: películas más similares a "Inception" por embedding
+    SELECT title, genre, year,
            similarity_cosine(embedding, [0.12, 0.45, 0.91, 0.33, 0.18, 0.50, 0.05, 0.82]) AS score
     FROM movies
     ORDER BY embedding ANN OF [0.12, 0.45, 0.91, 0.33, 0.18, 0.50, 0.05, 0.82]
     LIMIT 5;
     ```
 
-    Tareas del ejercicio: insertar 10 películas con embeddings ficticios;
-    consultar todas; buscar por género y por año; agregar una colección
-    `SET<TEXT>` para actores; agregar un `MAP<TEXT,TEXT>` con información
-    adicional; incorporar un UDT para el director; crear el índice sobre el
-    vector; y explicar el funcionamiento de la sentencia `SELECT` con
-    `ANN OF`.
+    Esta última consulta no filtra por igualdad: `ORDER BY embedding ANN OF
+    [...]` le pide al motor que recorra el índice HNSW y devuelva, en orden,
+    las películas cuyo `embedding` está geométricamente más cerca del vector
+    de "Inception" (aproximación por vecinos más cercanos, no un escaneo
+    exacto de toda la tabla), mientras que `similarity_cosine(...)` en el
+    `SELECT` solo calcula y muestra ese puntaje de similitud para cada fila
+    devuelta. En este caso, al compartir género y una época similar de
+    valores en el embedding, se espera que "The Matrix" e "Interstellar"
+    aparezcan entre las más cercanas.
+
+## Preguntas del laboratorio
+
+Todas las preguntas de discusión planteadas durante el laboratorio,
+respondidas en un solo lugar:
+
+??? question "¿Cuándo conviene usar un UDT?"
+    Cuando un grupo de campos relacionados (por ejemplo los de una
+    dirección) siempre se leen y escriben juntos y no necesitan consultarse
+    ni indexarse por separado: agruparlos en un UDT evita crear una tabla
+    adicional y simplifica el modelo.
+
+??? question "¿Qué hace el modificador `frozen`?"
+    Serializa el UDT (o colección) completo como un único valor binario e
+    inmutable. Ya no se pueden actualizar campos individuales del UDT (solo
+    reemplazar el valor entero con un nuevo `UPDATE`), pero a cambio
+    Cassandra puede compararlo y "hashearlo" como un todo.
+
+??? question "¿Qué ventajas tiene el uso de `frozen`?"
+    Al estar `frozen`, el UDT puede anidarse dentro de colecciones
+    (`list<frozen<direccion>>`) y usarse como parte de la primary key,
+    además de reducir el overhead de almacenamiento frente a columnas
+    individuales (se guarda como un solo valor en vez de una celda con
+    metadata propia por cada campo).
+
+??? question "¿Por qué no funciona `UPDATE ... SET calificacion[1] = ...` sobre una tupla?"
+    Porque `tuple`, igual que un UDT, es un tipo implícitamente `frozen`: se
+    trata como un valor atómico e indivisible. La sintaxis
+    `columna[índice] = valor` para modificar un elemento puntual solo es
+    válida sobre colecciones no congeladas (`list`, `set`, `map`), no sobre
+    tuplas.
+
+??? question "¿Cómo debería escribirse correctamente ese `UPDATE`?"
+    Reemplazando la tupla completa, no un elemento individual:
+
+    ```sql
+    UPDATE entregas_tp
+    SET calificacion = (8.50, 'Promocionado')
+    WHERE materia_id = a3b8e8f0-1234-11ed-a100-0242ac120002
+      AND tp_id = 1
+      AND alumno_id = c9d8e7f0-5678-11ed-a100-0242ac120002;
+    ```
+
+??? question "Para cada tabla de la Liga de fútbol, ¿qué columna(s) es la partition key?"
+    - `partidos_por_torneo`: `torneo_id`.
+    - `partidos_por_equipo`: `equipo_id`.
+    - `partidos_por_equipo_temporada`: la clave compuesta
+      `(equipo_id, temporada)`.
+    - `partidos_por_temporada`: `temporada`.
+    - `ranking_goleadores`: `temporada`.
+
+    En los cinco casos la partition key es la columna (o combinación de
+    columnas) por la que se filtra con igualdad en la consulta que la tabla
+    resuelve; el resto de las columnas usadas para ordenar u acotar el
+    resultado son clustering keys.
+
+??? question "¿Qué cambio en la consulta invalidaría alguna de estas tablas?"
+    Cualquier filtro que no coincida con la partition key definida. Por
+    ejemplo, `partidos_por_torneo` (partition key `torneo_id`) no puede
+    responder eficientemente "partidos de un equipo" — para eso existe
+    `partidos_por_equipo`. Del mismo modo, si se necesitara "partidos de un
+    equipo en un rango de fechas que cruza varias temporadas",
+    `partidos_por_equipo_temporada` (partition key `(equipo_id, temporada)`)
+    ya no alcanzaría, porque el rango caería en particiones distintas; ahí
+    conviene volver a `partidos_por_equipo`, que sí tiene todo el historial
+    del equipo en una sola partición. En Cassandra cada nuevo patrón de
+    consulta que no calce con una partition key existente requiere, en
+    general, una tabla desnormalizada nueva.
+
+??? question "¿Cómo impacta esto en el tamaño de las particiones?"
+    `partidos_por_equipo` acumula en una sola partición **todo** el
+    historial del equipo, que puede crecer sin límite a lo largo de los
+    años (partición "ancha"). `partidos_por_equipo_temporada` evita ese
+    problema acotando la partición a una temporada. Algo similar aplica a
+    `partidos_por_torneo`: si `torneo_id` identifica una edición puntual del
+    torneo, la partición queda acotada; si en cambio identifica una
+    competencia que se repite indefinidamente año tras año, la partición
+    también crecería sin límite y convendría partir por
+    `(torneo_id, temporada)` en su lugar.
