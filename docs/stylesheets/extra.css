@@ -19,7 +19,7 @@
 
 /* Tipografía monoespaciada un poco más compacta en bloques de código */
 .md-typeset pre > code {
-  font-size: 0.82rem;
+  font-size: 0.72rem;
 }
 
 /* Tablas más cómodas para comparar datos */
