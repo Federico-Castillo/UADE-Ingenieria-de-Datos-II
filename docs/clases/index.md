@@ -12,6 +12,7 @@ temas de todas las clases.
 | [2](clase-02.md) | 11/8 | Distribución y Replicación, cómo afecta a la consistencia. Modelos de consistencia. |
 | [3](clase-03.md) | 18/8 | Bases de datos Documentales. Laboratorio 1 — MongoDB. |
 | [4](clase-04.md) | 25/8 | Bases de datos Tabulares. Características, carga y recuperación de información, escalabilidad. |
+| [6](clase-06.md) | 8/9 | Bases de datos de Columnas. Laboratorio 3 — Apache Cassandra. |
 
 !!! info "Convención"
     Cada clase es un archivo `clases/clase-NN.md` con una sección

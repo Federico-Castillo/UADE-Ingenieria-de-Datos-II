@@ -10,3 +10,4 @@ cada una.
 | [2](../clases/clase-02.md) | 11/8 | [Distribución](archivos/clase-02-distribucion.pdf){: target="_blank" } |
 | [3](../clases/clase-03.md) | 18/8 | [Laboratorio 1 — MongoDB](archivos/clase-03-laboratorio-1-mongodb.pdf){: target="_blank" } |
 | [4](../clases/clase-04.md) | 25/8 | [Presentación](archivos/clase-04-presentacion.pdf){: target="_blank" } |
+| [6](../clases/clase-06.md) | 8/9 | [Laboratorio 3 — Cassandra](archivos/clase-06-laboratorio_Cassandra.pdf){: target="_blank" } |
