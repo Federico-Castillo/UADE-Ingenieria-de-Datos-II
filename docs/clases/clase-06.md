@@ -383,6 +383,273 @@ bases relacionales, Cassandra se organiza en:
     valores en el embedding, se espera que "The Matrix" e "Interstellar"
     aparezcan entre las más cercanas.
 
+## Ejercicio de modelado — Sistema de préstamos de libros digitales
+
+**Material:** [Ejercicio de Modelado Cassandra](../materiales/archivos/clase-06-ejercicio-modelado-cassandra.pdf){: target="_blank" }
+
+Ejercicio de modelado de punta a punta (conceptual → lógico → físico) para
+una cadena de librerías que gestiona libros digitales guardados en distintos
+centros de datos, con autores, ejemplares, usuarios y préstamos.
+
+??? note "Modelado conceptual"
+    **Entidades:** Autor, Libro, Ejemplar, Centro de Datos, Usuario, Préstamo.
+
+    **Relaciones:**
+
+    - Un **Autor** escribe uno o más **Libros**; un **Libro** puede tener uno
+      o más autores (N:M).
+    - Un **Libro** tiene uno o más **Ejemplares**; cada **Ejemplar**
+      corresponde a un solo libro (1:N).
+    - Un **Centro de Datos** aloja muchos **Ejemplares**; cada ejemplar está
+      ubicado en un solo centro (1:N).
+    - Un **Usuario** realiza muchos **Préstamos**; cada préstamo pertenece a
+      un solo usuario (1:N).
+    - Un **Ejemplar** puede tener muchos **Préstamos** a lo largo del
+      tiempo, pero como máximo uno **activo** en un momento dado (1:N, con
+      restricción de concurrencia).
+
+    ```mermaid
+    erDiagram
+        AUTOR ||--o{ LIBRO_AUTOR : escribe
+        LIBRO ||--o{ LIBRO_AUTOR : tiene
+        LIBRO ||--o{ EJEMPLAR : posee
+        CENTRO_DE_DATOS ||--o{ EJEMPLAR : aloja
+        EJEMPLAR ||--o{ PRESTAMO : genera
+        USUARIO ||--o{ PRESTAMO : realiza
+
+        AUTOR {
+            uuid autor_id PK
+            string nombre
+            date fecha_nacimiento
+            text biografia
+        }
+        LIBRO {
+            uuid libro_id PK
+            string titulo
+            string genero
+        }
+        LIBRO_AUTOR {
+            uuid libro_id FK
+            uuid autor_id FK
+        }
+        EJEMPLAR {
+            int numero PK
+            uuid libro_id FK
+            uuid centro_id FK
+        }
+        CENTRO_DE_DATOS {
+            uuid centro_id PK
+            string nombre
+            string responsable
+            string ubicacion
+        }
+        USUARIO {
+            uuid usuario_id PK
+            string nombre
+            string direccion
+            date fecha_alta
+        }
+        PRESTAMO {
+            uuid prestamo_id PK
+            uuid ejemplar_id FK
+            uuid usuario_id FK
+            timestamp fecha_prestamo
+            timestamp fecha_devolucion
+        }
+    ```
+
+    `LIBRO_AUTOR` es la entidad asociativa típica de un modelo
+    Entidad-Relación para resolver la relación N:M autor-libro. En Cassandra
+    esta relación no se implementa como tabla intermedia: se desnormaliza
+    dentro de cada tabla orientada a consulta (ver Modelado lógico).
+
+??? note "Modelado lógico"
+    Cassandra no tiene JOINs ni claves foráneas: cada patrón de consulta se
+    resuelve con una tabla propia, desnormalizando los datos que hagan
+    falta. A partir de las consultas pedidas (algunas se repiten o se
+    refinan entre sí) se identifican estos patrones de acceso:
+
+    | Consulta que resuelve | Tabla | Partition key | Clustering key |
+    |---|---|---|---|
+    | Libros de un autor (por nombre), solos o filtrados por género | `libros_por_autor` | `autor_nombre` | `genero`, `libro_id` |
+    | Autores que escribieron en un género | `autores_por_genero` | `genero` | `autor_id` |
+    | Historial de préstamos de un libro, con datos del usuario | `prestamos_por_libro` | `libro_titulo` | `fecha_prestamo` DESC, `prestamo_id` |
+    | Préstamos activos de un usuario, ordenados por fecha | `prestamos_activos_por_usuario` | `usuario_nombre` | `fecha_prestamo` DESC, `prestamo_id` |
+    | Ejemplares disponibles en un centro, ordenados por título | `ejemplares_por_centro` | `centro_id` | `disponible`, `libro_titulo`, `ejemplar_numero` |
+    | Libros prestados en una fecha, con libro y autor, por título | `prestamos_por_fecha` | `fecha_prestamo` | `libro_titulo`, `prestamo_id` |
+    | Autores con 3 o más géneros distintos | `generos_por_autor` | `autor_id` | — (columna `set<text>`) |
+    | Regla: un ejemplar no se presta dos veces a la vez | `prestamo_activo_por_ejemplar` | `libro_id` | `ejemplar_numero` |
+
+    `libros_por_autor` usa `genero` como primer campo de la clustering key
+    porque la última consulta del enunciado ("libros de un autor y de un
+    género determinado") es un refinamiento de "libros de un autor": al
+    tener `genero` como prefijo de la clustering key se puede filtrar por
+    ambos sin `ALLOW FILTERING`. Por la misma razón, `prestamos_activos_por_usuario`
+    resuelve tanto "préstamos activos de un usuario" como su variante
+    "ordenados por fecha", porque el `CLUSTERING ORDER` ya devuelve las filas
+    ordenadas.
+
+??? tip "Modelado físico"
+    ```sql
+    -- Libros de un autor (+ filtro opcional por género, gracias al prefijo
+    -- compartido de la clustering key)
+    CREATE TABLE libros_por_autor (
+        autor_nombre text,
+        genero text,
+        libro_id uuid,
+        titulo text,
+        autor_id uuid,
+        PRIMARY KEY (autor_nombre, genero, libro_id)
+    );
+
+    -- Autores por género
+    CREATE TABLE autores_por_genero (
+        genero text,
+        autor_id uuid,
+        autor_nombre text,
+        PRIMARY KEY (genero, autor_id)
+    );
+
+    -- Historial de préstamos de un libro, con el usuario ya desnormalizado
+    CREATE TABLE prestamos_por_libro (
+        libro_titulo text,
+        fecha_prestamo timestamp,
+        prestamo_id uuid,
+        ejemplar_numero int,
+        usuario_id uuid,
+        usuario_nombre text,
+        fecha_devolucion timestamp,
+        PRIMARY KEY (libro_titulo, fecha_prestamo, prestamo_id)
+    ) WITH CLUSTERING ORDER BY (fecha_prestamo DESC, prestamo_id ASC);
+
+    -- Préstamos activos de un usuario (la fila se borra al devolver el ejemplar)
+    CREATE TABLE prestamos_activos_por_usuario (
+        usuario_nombre text,
+        fecha_prestamo timestamp,
+        prestamo_id uuid,
+        libro_titulo text,
+        ejemplar_numero int,
+        PRIMARY KEY (usuario_nombre, fecha_prestamo, prestamo_id)
+    ) WITH CLUSTERING ORDER BY (fecha_prestamo DESC, prestamo_id ASC);
+
+    -- Ejemplares disponibles por centro de datos, orden por título
+    CREATE TABLE ejemplares_por_centro (
+        centro_id uuid,
+        disponible boolean,
+        libro_titulo text,
+        ejemplar_numero int,
+        libro_id uuid,
+        PRIMARY KEY (centro_id, disponible, libro_titulo, ejemplar_numero)
+    );
+
+    -- Libros prestados en una fecha determinada
+    CREATE TABLE prestamos_por_fecha (
+        fecha_prestamo date,
+        libro_titulo text,
+        prestamo_id uuid,
+        autor_nombre text,
+        usuario_nombre text,
+        PRIMARY KEY (fecha_prestamo, libro_titulo, prestamo_id)
+    );
+
+    -- Géneros distintos por autor, para detectar autores con 3 o más
+    CREATE TABLE generos_por_autor (
+        autor_id uuid PRIMARY KEY,
+        autor_nombre text,
+        generos set<text>
+    );
+
+    -- Regla de negocio: un ejemplar no puede prestarse dos veces a la vez
+    CREATE TABLE prestamo_activo_por_ejemplar (
+        libro_id uuid,
+        ejemplar_numero int,
+        prestamo_id uuid,
+        usuario_id uuid,
+        fecha_prestamo timestamp,
+        PRIMARY KEY (libro_id, ejemplar_numero)
+    );
+    ```
+
+    **Diagrama de Chebotko** (consulta → tabla; entre paréntesis, la
+    clustering key):
+
+    ```mermaid
+    flowchart LR
+        Q1["Libros de un autor<br/>(+ filtro por género)"] --> T1["libros_por_autor<br/>PK: autor_nombre (genero, libro_id)"]
+        Q2["Autores por género"] --> T2["autores_por_genero<br/>PK: genero (autor_id)"]
+        Q3["Historial de préstamos<br/>de un libro + usuario"] --> T3["prestamos_por_libro<br/>PK: libro_titulo (fecha_prestamo, prestamo_id)"]
+        Q4["Préstamos activos<br/>de un usuario, por fecha"] --> T4["prestamos_activos_por_usuario<br/>PK: usuario_nombre (fecha_prestamo, prestamo_id)"]
+        Q5["Ejemplares disponibles<br/>en un centro, por título"] --> T5["ejemplares_por_centro<br/>PK: centro_id (disponible, libro_titulo)"]
+        Q6["Libros prestados<br/>en una fecha"] --> T6["prestamos_por_fecha<br/>PK: fecha_prestamo (libro_titulo)"]
+        Q7["Autores con 3+<br/>géneros distintos"] --> T7["generos_por_autor<br/>PK: autor_id"]
+        Q8["Regla: 1 préstamo activo<br/>por ejemplar"] --> T8["prestamo_activo_por_ejemplar<br/>PK: libro_id (ejemplar_numero)"]
+    ```
+
+??? question "Consultas resueltas"
+    ```sql
+    -- ¿Cuáles son los libros escritos por un autor determinado (por nombre)?
+    SELECT titulo, genero FROM libros_por_autor
+    WHERE autor_nombre = 'Jorge Luis Borges';
+
+    -- ¿Cuáles son los libros escritos por el autor con nombre determinado
+    -- y que pertenecen a un género determinado?
+    SELECT titulo FROM libros_por_autor
+    WHERE autor_nombre = 'Jorge Luis Borges' AND genero = 'Cuento';
+
+    -- ¿Qué autores han escrito libros en un género determinado?
+    SELECT autor_nombre FROM autores_por_genero
+    WHERE genero = 'Ciencia Ficción';
+
+    -- ¿Cuál es el historial de préstamos del libro con un título
+    -- determinado, incluyendo información del usuario que lo tomó
+    -- prestado? (usuario_nombre ya está desnormalizado en la fila)
+    SELECT fecha_prestamo, usuario_nombre, fecha_devolucion
+    FROM prestamos_por_libro
+    WHERE libro_titulo = 'Ficciones';
+
+    -- ¿Cuáles son los préstamos activos de un usuario determinado,
+    -- ordenados por fecha de préstamo? (el CLUSTERING ORDER ya los
+    -- devuelve ordenados por fecha_prestamo DESC)
+    SELECT libro_titulo, ejemplar_numero, fecha_prestamo
+    FROM prestamos_activos_por_usuario
+    WHERE usuario_nombre = 'Ana Pérez';
+
+    -- ¿Cuáles son los libros disponibles en un centro de datos,
+    -- ordenados por título?
+    SELECT libro_titulo, ejemplar_numero FROM ejemplares_por_centro
+    WHERE centro_id = 3f2b1a10-1234-11ed-a100-0242ac120002 AND disponible = true;
+
+    -- ¿Qué autores han escrito libros en más de un género (al menos 3)?
+    -- Cassandra no agrega "cuántos elementos tiene un set" en el WHERE;
+    -- se lee el set por autor y se filtra SIZE(generos) >= 3 en la app.
+    SELECT autor_nombre, generos FROM generos_por_autor
+    WHERE autor_id = c9d8e7f0-5678-11ed-a100-0242ac120002;
+
+    -- ¿Qué libros se han prestado a los usuarios en una fecha determinada,
+    -- incluyendo el nombre del libro y el autor, ordenado por título?
+    SELECT libro_titulo, autor_nombre, usuario_nombre
+    FROM prestamos_por_fecha
+    WHERE fecha_prestamo = '2026-09-10';
+    ```
+
+    **Regla "un ejemplar no puede prestarse a más de una persona al mismo
+    tiempo"**: se resuelve con una escritura condicional (LWT), no con un
+    `SELECT` previo (que sería vulnerable a una carrera entre dos préstamos
+    simultáneos):
+
+    ```sql
+    -- Prestar: falla (applied=false) si el ejemplar ya tiene un préstamo activo
+    INSERT INTO prestamo_activo_por_ejemplar
+        (libro_id, ejemplar_numero, prestamo_id, usuario_id, fecha_prestamo)
+    VALUES
+        (a3b8e8f0-1234-11ed-a100-0242ac120002, 3, uuid(), c9d8e7f0-5678-11ed-a100-0242ac120002, toTimestamp(now()))
+    IF NOT EXISTS;
+
+    -- Devolver: libera el ejemplar para un próximo préstamo
+    DELETE FROM prestamo_activo_por_ejemplar
+    WHERE libro_id = a3b8e8f0-1234-11ed-a100-0242ac120002 AND ejemplar_numero = 3;
+    ```
+
 ## Preguntas del laboratorio
 
 Todas las preguntas de discusión planteadas durante el laboratorio,
